@@ -19,17 +19,17 @@ public class DateRangeTest {
 
     //@Test
     public void checkPerformanceofDoesDateFallInRange(){
-        Random randomGenerator = new Random();
+       Random randomGenerator = new Random();
         for( int i = 0; i < 10000000; i++) {
             if(i%2==0) {
                 assertEquals(DateRange.DateStatus.DATE_WITHIN_DATE_RANGE, source.checkWithDate(DateCommons.getDate(12, 12, 2012),true));
             }
             else
-                assertEquals(DateRange.DateStatus.DATE_WITHIN_DATE_RANGE, source.checkWithDate(DateCommons.getDate(11, 11, 2012), true));
-                //assertNotNull(source.checkWithDate(DateCommons.getDate(randomGenerator.nextInt(13), randomGenerator.nextInt(13),        randomGenerator.nextInt(2020))));
+                //assertEquals(DateRange.DateStatus.DATE_WITHIN_DATE_RANGE, source.checkWithDate(DateCommons.getDate(11, 11, 2012), true));
+               assertNotNull(source.checkWithDate(DateCommons.getDate(randomGenerator.nextInt(13), randomGenerator.nextInt(13),        randomGenerator.nextInt(2020)),true));
         }
-        System.out.println("the total time taken = " + source.time_taken);
-        System.out.println("Cache size = " + source.getCasheDSSize());
+        System.out.println(new StringBuilder().append("the total time taken = ").append(source.getTime_taken()).toString());
+        System.out.println(new StringBuilder().append("Cache size = ").append(source.getCasheDSSize()).toString());
     }
 
 
@@ -46,8 +46,8 @@ public class DateRangeTest {
                 assertEquals(DateRange.DateRangeStatus.DATERANGE_ENVELOPPING, source.checkWithDateRange(target,true));
 
         }
-        System.out.println("the total time taken = " + source.time_taken);
-        System.out.println("Cache size = " + source.getCasheDSSize());
+        System.out.println(new StringBuilder().append("the total time taken = ").append(source.getTime_taken()).toString());
+        System.out.println(new StringBuilder().append("Cache size = ").append(source.getCasheDSSize()).toString());
     }
 
 

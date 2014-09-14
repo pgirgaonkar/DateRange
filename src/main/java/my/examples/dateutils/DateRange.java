@@ -4,7 +4,6 @@ package my.examples.dateutils;
  * Created by pgirga on 9/7/2014.
  */
 
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Map;
 
 public class DateRange
 {
-    public static final	int DATE_RANGE_DEFAULT	 					= -100;
     private Map <Date, DateStatus> cacheDS = null ;
     private Map <DateRange, DateRangeStatus> cacheDRS = null ;
 
@@ -25,34 +23,33 @@ public class DateRange
     }
 
     public enum DateStatus{
-        DATE_BEFORE_START_DATE , DATE_IS_START_DATE, DATE_WITHIN_DATE_RANGE, DATE_IS_END_DATE, DATE_AFTER_END_DATE,  DATE_RANGE_DEFAULT
-    };
+        DATE_BEFORE_START_DATE ,
+        DATE_IS_START_DATE,
+        DATE_WITHIN_DATE_RANGE,
+        DATE_IS_END_DATE,
+        DATE_AFTER_END_DATE,
+        DATE_RANGE_DEFAULT
+    }
 
 
     public enum DateRangeStatus{
-        DATE_RANGE_DEFAULT, DATERANGE_LIES_WITHIN, DATERANGE_ENVELOPPING, DATERANGE_OVERLAPPING_FROM_START_DATE,
-        DATERANGE_OVERLAPPING_FROM_END_DATE, DATERANGE_EXACT_MATCH, DATERANGE_OUTSIDE_FROM_START_DATE, DATERANGE_OUTSIDE_FROM_END_DATE
-    }   ;
+        DATE_RANGE_DEFAULT,
+        DATERANGE_LIES_WITHIN,
+        DATERANGE_ENVELOPPING,
+        DATERANGE_OVERLAPPING_FROM_START_DATE,
+        DATERANGE_OVERLAPPING_FROM_END_DATE,
+        DATERANGE_EXACT_MATCH,
+        DATERANGE_OUTSIDE_FROM_START_DATE,
+        DATERANGE_OUTSIDE_FROM_END_DATE
+    }
 
-    public static final	int DATE_BEFORE_START_DATE 					= 1;
-    public static final	int DATE_IS_START_DATE						= 2;
-    public static final	int DATE_WITHIN_DATE_RANGE					= 3;
-    public static final	int DATE_IS_END_DATE						= 4;
-    public static final	int DATE_AFTER_END_DATE						= 5;
 
+    public long getTime_taken() {
+        return time_taken;
+    }
 
-    public static final	int DATERANGE_LIES_WITHIN					= 0;
-    public static final	int DATERANGE_EVELOPPING					= 1;
-    public static final	int DATERANGE_OVERLAPPING_FROM_START_DATE	= 2;
-    public static final	int DATERANGE_OVERLAPPING_FROM_END_DATE		= 3;
-    public static final	int DATERANGE_EXACT_MATCH					= 4;
-    public static final	int DATERANGE_OUTSIDE_FROM_START_DATE		= 5;
-    public static final	int DATERANGE_OUTSIDE_FROM_END_DATE 		= 6;
-
-    public long time_taken = 0;
+    private long time_taken = 0;
     private long start_time =0;
-
-
 
     private		Date	startDate	= null;
     private		Date	endDate		= null;
@@ -66,10 +63,8 @@ public class DateRange
 
         DateRange dateRange = (DateRange) o;
 
-        if (!endDate.equals(dateRange.endDate)) return false;
-        if (!startDate.equals(dateRange.startDate)) return false;
+        return endDate.equals(dateRange.endDate) && startDate.equals(dateRange.startDate);
 
-        return true;
     }
 
     @Override
@@ -115,18 +110,6 @@ public class DateRange
         return (endDate);
     }
 
-
-    private boolean checkDateRangeEqual(DateRange target)
-    {
-        if (startDate.equals(target.getStartDate()) && endDate.equals(target.getEndDate()))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
     /*
     Returns ::
@@ -193,6 +176,11 @@ public class DateRange
         int startValue = checkStartDate(target);
         int endValue   = checkEndDate(target);
 
+        return finsDateStatus(startValue, endValue);
+
+    }
+
+    private DateStatus finsDateStatus(int startValue, int endValue) {
         if (startValue > 0)
             return DateStatus.DATE_BEFORE_START_DATE;
         else if (startValue == 0 )
@@ -204,7 +192,6 @@ public class DateRange
         else if (endValue < 0)
             return DateStatus.DATE_AFTER_END_DATE;
         else return DateStatus.DATE_RANGE_DEFAULT;
-
     }
 
     private void updateCacheDS(Date d, DateStatus ds){
@@ -255,54 +242,31 @@ public class DateRange
 
         int startValueStart = checkStartDate(target.getStartDate());
         int startValueEnd   = checkEndDate(target.getStartDate());
-
-
         int endValueStart = checkStartDate(target.getEndDate());
         int endValueEnd   = checkEndDate(target.getEndDate());
 
+        return findDateRangeStatus(startValueStart, startValueEnd, endValueStart, endValueEnd);
+    }
+
+    private DateRangeStatus findDateRangeStatus(int startValueStart, int startValueEnd, int endValueStart, int endValueEnd) {
 
         if (startValueStart == 0 && endValueEnd == 0)
             return DateRangeStatus.DATERANGE_EXACT_MATCH;
-
         else if (startValueStart <= 0 && endValueEnd >= 0)
-            return DateRangeStatus.DATERANGE_LIES_WITHIN; //within this.Date range
-
+            return DateRangeStatus.DATERANGE_LIES_WITHIN;
         else if (startValueStart >= 0 && endValueEnd <= 0)
-            return DateRangeStatus.DATERANGE_ENVELOPPING; //envolpping this.daterange
-
+            return DateRangeStatus.DATERANGE_ENVELOPPING;
         else if ((startValueStart < 0 && startValueEnd > 0) && endValueEnd < 0)
-            return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_END_DATE; //overlapping date range from this.endDate
-
+            return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_END_DATE;
         else if ((endValueStart < 0 && endValueEnd > 0) && startValueStart > 0)
-            return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_START_DATE; //overlapping date range from this.startDate
-
+            return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_START_DATE;
         else if (endValueStart > 0)
-            return DateRangeStatus.DATERANGE_OUTSIDE_FROM_START_DATE; //out of date range from this.startDate
-
+            return DateRangeStatus.DATERANGE_OUTSIDE_FROM_START_DATE;
         else if (startValueEnd < 0)
-            return DateRangeStatus.DATERANGE_OUTSIDE_FROM_END_DATE; //out of date range from this.endDate
+            return DateRangeStatus.DATERANGE_OUTSIDE_FROM_END_DATE; //
         else   return DateRangeStatus.DATE_RANGE_DEFAULT;
     }
 
 
-    public static void main(String[] args) {
-
-        // create two dates
-        Date date = DateCommons.getDate(98, 5, 21);
-        Date date2 = DateCommons.getDate(99, 1, 9);
-        Date date3 = DateCommons.getDate(99, 1, 9);
-
-        // make 3 comparisons with them
-        int comparison = date.compareTo(date2);
-        int comparison2 = date2.compareTo(date);
-        int comparison3 = date.compareTo(date);
-          comparison3 = date2.compareTo(date3);
-
-        // print the results
-        System.out.println("Comparison Result:" + comparison);
-        System.out.println("Comparison2 Result:" + comparison2);
-        System.out.println("Comparison3 Result:" + comparison3);
-
-    }
-}//Class
+}
 
