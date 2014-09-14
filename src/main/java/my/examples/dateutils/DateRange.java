@@ -6,12 +6,23 @@ package my.examples.dateutils;
 
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class DateRange
 {
     public static final	int DATE_RANGE_DEFAULT	 					= -100;
+    private Map <Date, DateStatus> cacheDS = null ;
+    private Map <DateRange, DateRangeStatus> cacheDRS = null ;
 
+    public long getCasheDSSize(){
+        return cacheDS.size();
+    }
+
+    public long getCasheDRSSize(){
+        return cacheDRS.size();
+    }
 
     public enum DateStatus{
         DATE_BEFORE_START_DATE , DATE_IS_START_DATE, DATE_WITHIN_DATE_RANGE, DATE_IS_END_DATE, DATE_AFTER_END_DATE,  DATE_RANGE_DEFAULT
@@ -19,7 +30,7 @@ public class DateRange
 
 
     public enum DateRangeStatus{
-        DATE_RANGE_DEFAULT, DATERANGE_LIES_WITHIN, DATERANGE_EVELOPPING,DATERANGE_OVERLAPPING_FROM_START_DATE,
+        DATE_RANGE_DEFAULT, DATERANGE_LIES_WITHIN, DATERANGE_ENVELOPPING, DATERANGE_OVERLAPPING_FROM_START_DATE,
         DATERANGE_OVERLAPPING_FROM_END_DATE, DATERANGE_EXACT_MATCH, DATERANGE_OUTSIDE_FROM_START_DATE, DATERANGE_OUTSIDE_FROM_END_DATE
     }   ;
 
@@ -37,6 +48,9 @@ public class DateRange
     public static final	int DATERANGE_EXACT_MATCH					= 4;
     public static final	int DATERANGE_OUTSIDE_FROM_START_DATE		= 5;
     public static final	int DATERANGE_OUTSIDE_FROM_END_DATE 		= 6;
+
+    public long time_taken = 0;
+    private long start_time =0;
 
 
 
@@ -79,12 +93,16 @@ public class DateRange
             startDate = new Date(StartDate.getTime());
             endDate   = new Date(EndDate.getTime());
         }
+        cacheDS = new HashMap<Date, DateStatus>();
+        cacheDRS = new HashMap<DateRange, DateRangeStatus>();
     }
 
     public DateRange(Date StartDate, int periodInDays)
     {
         startDate = new Date(StartDate.getTime());
         endDate   = DateCommons.addDays(startDate, periodInDays);
+        cacheDS = new HashMap<Date, DateStatus>();
+        cacheDRS = new HashMap<DateRange, DateRangeStatus>();
     }
 
     public Date getStartDate()
@@ -144,45 +162,63 @@ public class DateRange
     4 :: If target date is on end date			- DATE_IS_END_DATE
     5 :: If target date is after end date		- DATE_AFTER_END_DATE
     */
-    public DateStatus checkWithDate(Date target)
+
+    DateStatus ds = null;
+
+    public  DateStatus checkWithDate(Date target, boolean genStat){
+        return !genStat ? checkWithDateInt(target) : checkWithDateWithStat(target);
+    }
+
+
+    private  DateStatus checkWithDateWithStat(Date target)
     {
+        start_time = System.nanoTime();
+        ds = checkWithDateInt(target);
+        time_taken =  (System.nanoTime() - start_time) + time_taken;
+        return ds;
+    }
+
+    private DateStatus checkWithDateInt(Date target)
+    {
+        ds = cacheDS.get(target);
+        if (null == ds ){
+            ds = getDateStatus(target);
+            updateCacheDS(target, ds);
+        }
+        return ds;
+    }
+
+    private DateStatus getDateStatus(Date target) {
+
         int startValue = checkStartDate(target);
         int endValue   = checkEndDate(target);
 
         if (startValue > 0)
-        {
-            //source is before start date
             return DateStatus.DATE_BEFORE_START_DATE;
-        }
-
-        if (startValue == 0 )
-        {
+        else if (startValue == 0 )
             return DateStatus.DATE_IS_START_DATE;
-        }
-
-        if (startValue < 0 && endValue > 0)
-        {
+        else if (startValue < 0 && endValue > 0)
             return DateStatus.DATE_WITHIN_DATE_RANGE;
-        }
-
-        if (endValue == 0 )
-        {
+        else if (endValue == 0 )
             return DateStatus.DATE_IS_END_DATE;
-        }
-
-        if (endValue < 0)
-        {
+        else if (endValue < 0)
             return DateStatus.DATE_AFTER_END_DATE;
-        }
+        else return DateStatus.DATE_RANGE_DEFAULT;
 
-        return DateStatus.DATE_RANGE_DEFAULT;
     }
 
+    private void updateCacheDS(Date d, DateStatus ds){
+        cacheDS.put(d, ds);
+    }
+
+    private void updateCacheDRS(DateRange dr, DateRangeStatus ds){
+        cacheDRS.put(dr, ds);
+    }
 
     /*
     Returns::
     0  :: If target date range lies within this.date range		- DATERANGE_LIES_WITHIN
-    1  :: If target date range is envoloping this.Date range	- DATERANGE_EVELOPPING
+    1  :: If target date range is envoloping this.Date range	- DATERANGE_ENVELOPPING
     2  :: If target date range is overlapping from start date	- DATERANGE_OVERLAPPING_FROM_START_DATE
     3  :: If target date range is overlapping from end date		- DATERANGE_OVERLAPPING_FROM_END_DATE
     4  :: If target date range matches this.date range			- DATERANGE_EXACT_MATCH
@@ -191,8 +227,32 @@ public class DateRange
     6  :: If target date range is out of this.date range		- DATERANGE_OUTSIDE_FROM_END_DATE
              from end date side
     */
-    public DateRangeStatus checkWithDateRange(DateRange target)
+    DateRangeStatus drs = null;
+
+    public DateRangeStatus checkWithDateRange(DateRange target, boolean genStat) {
+        return !genStat ? checkWithDateRangeInt(target) : checkWithDateRangeWithStat(target);
+    }
+
+    private DateRangeStatus checkWithDateRangeInt(DateRange target)
     {
+        drs = cacheDRS.get(target);
+        if (null == drs ){
+            drs = getDateRangeStatus(target);
+            updateCacheDRS(target, drs);
+        }
+        return drs;
+    }
+
+    private DateRangeStatus checkWithDateRangeWithStat(DateRange target)
+    {
+        start_time = System.nanoTime();
+        drs = checkWithDateRangeInt(target);
+        time_taken =  (System.nanoTime() - start_time) + time_taken;
+        return drs;
+    }
+
+    private DateRangeStatus getDateRangeStatus(DateRange target) {
+
         int startValueStart = checkStartDate(target.getStartDate());
         int startValueEnd   = checkEndDate(target.getStartDate());
 
@@ -202,44 +262,26 @@ public class DateRange
 
 
         if (startValueStart == 0 && endValueEnd == 0)
-        {
             return DateRangeStatus.DATERANGE_EXACT_MATCH;
-        }
 
-        if (startValueStart <= 0 && endValueEnd >= 0)
-        {
+        else if (startValueStart <= 0 && endValueEnd >= 0)
             return DateRangeStatus.DATERANGE_LIES_WITHIN; //within this.Date range
-        }
 
-        if (startValueStart >= 0 && endValueEnd <= 0)
-        {
-            return DateRangeStatus.DATERANGE_EVELOPPING; //envolpping this.daterange
-        }
+        else if (startValueStart >= 0 && endValueEnd <= 0)
+            return DateRangeStatus.DATERANGE_ENVELOPPING; //envolpping this.daterange
 
-        if ((startValueStart < 0 && startValueEnd > 0) && endValueEnd < 0)
-        {
+        else if ((startValueStart < 0 && startValueEnd > 0) && endValueEnd < 0)
             return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_END_DATE; //overlapping date range from this.endDate
-        }
 
-
-        if ((endValueStart < 0 && endValueEnd > 0) && startValueStart > 0)
-        {
+        else if ((endValueStart < 0 && endValueEnd > 0) && startValueStart > 0)
             return DateRangeStatus.DATERANGE_OVERLAPPING_FROM_START_DATE; //overlapping date range from this.startDate
-        }
 
-
-        /********RECHECK********/
-        if (endValueStart > 0)
-        {
+        else if (endValueStart > 0)
             return DateRangeStatus.DATERANGE_OUTSIDE_FROM_START_DATE; //out of date range from this.startDate
-        }
 
-        if (startValueEnd < 0)
-        {
+        else if (startValueEnd < 0)
             return DateRangeStatus.DATERANGE_OUTSIDE_FROM_END_DATE; //out of date range from this.endDate
-        }
-
-        return DateRangeStatus.DATE_RANGE_DEFAULT;
+        else   return DateRangeStatus.DATE_RANGE_DEFAULT;
     }
 
 
