@@ -17,7 +17,12 @@ public class DateRangeTest {
     );
 
 
-    //@Test
+    DateRange sourceUsingPeriod = new DateRange(
+            DateCommons.getDate(1, 1, 2012),
+            1826
+    );
+
+    @Test
     public void checkPerformanceofDoesDateFallInRange(){
        Random randomGenerator = new Random();
         for( int i = 0; i < 10000000; i++) {
@@ -28,17 +33,17 @@ public class DateRangeTest {
                 //assertEquals(DateRange.DateStatus.DATE_WITHIN_DATE_RANGE, source.checkWithDate(DateCommons.getDate(11, 11, 2012), true));
                assertNotNull(source.checkWithDate(DateCommons.getDate(randomGenerator.nextInt(13), randomGenerator.nextInt(13),        randomGenerator.nextInt(2020)),true));
         }
-        System.out.println(new StringBuilder().append("the total time taken = ").append(source.getTime_taken()).toString());
-        System.out.println(new StringBuilder().append("Cache size = ").append(source.getCasheDSSize()).toString());
+        System.out.println(new StringBuilder().append("DS Check - the total time taken = ").append(source.getTime_taken()).toString());
+        System.out.println(new StringBuilder().append("DS Check - Cache size = ").append(source.getCasheDSSize()).toString());
     }
 
 
-    @Test
+  @Test
     public void checkPerformanceofDoesDateRangeFallInRange(){
 
         DateRange target = new DateRange(DateCommons.getDate(1, 1, 2011),
                 DateCommons.getDate(31, 12, 2017));
-        for( int i = 0; i < 10; i++) {
+        for( int i = 0; i < 100000; i++) {
             if(i%2==0) {
                 assertEquals(DateRange.DateRangeStatus.DATERANGE_ENVELOPPING, source.checkWithDateRange(target,true));
             }
@@ -46,8 +51,8 @@ public class DateRangeTest {
                 assertEquals(DateRange.DateRangeStatus.DATERANGE_ENVELOPPING, source.checkWithDateRange(target,true));
 
         }
-        System.out.println(new StringBuilder().append("the total time taken = ").append(source.getTime_taken()).toString());
-        System.out.println(new StringBuilder().append("Cache size = ").append(source.getCasheDSSize()).toString());
+        System.out.println(new StringBuilder().append("DRS Check - the total time taken = ").append(source.getTime_taken()).toString());
+        System.out.println(new StringBuilder().append("DRS Check - Cache size = ").append(source.getCasheDRSSize()).toString());
     }
 
 
@@ -76,8 +81,18 @@ public class DateRangeTest {
         assertEquals(DateRange.DateStatus.DATE_IS_START_DATE, source.checkWithDate(DateCommons.getDate(1, 1, 2012),false));
     }
 
-/************************************************************************************************************************/
-/*****************************************DATE RANGE CHECK***************************************************************/
+/*****************************************Source using the Period Constructor********************************************/
+    @Test
+    public void isDateEqualToEndDateForSourceWithPeriodContructor(){
+        assertEquals(DateRange.DateStatus.DATE_IS_END_DATE, sourceUsingPeriod.checkWithDate(DateCommons.getDate(31, 12, 2016), false));
+    }
+
+    @Test
+    public void isDateEqualToStartDateForSourceWithPeriodContructor(){
+        assertEquals(DateRange.DateStatus.DATE_IS_START_DATE, sourceUsingPeriod.checkWithDate(DateCommons.getDate(1, 1, 2012), false));
+    }
+
+    /*****************************************DATE RANGE CHECK***************************************************************/
    @Test
     public void isTargetDateRangeEnveloppingWithSource(){
         DateRange target = new DateRange(DateCommons.getDate(1, 1, 2011),
